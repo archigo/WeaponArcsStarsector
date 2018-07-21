@@ -6,6 +6,7 @@ Create ingame options:
 1. Choose displayed weapon arcs.
 2. Color picking and set aplha (transparency)
 
+**Contribution**
 If you want to contribute to this mod, you're welcome to submit a pull request.
 
 
