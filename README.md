@@ -2,7 +2,8 @@
 This is a mod for the game Starsector, which draws all the weapon arcs of the player ship, not just the ones from the currently selected weapon group. This is especcially usefull when selecting a missile weapon group, while still needing to aim other weapons. 
 
 
-
+**Game forum thread**
+http://fractalsoftworks.com/forum/index.php?topic=13535.0
 
 
 **Contribution**
