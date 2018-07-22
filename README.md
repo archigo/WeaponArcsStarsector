@@ -17,5 +17,5 @@ vanilla vs the mod:
 ![alt text](Domimator.jpg)
 
 **Credits goes to**
-LazyWizard - the creator of Lazylib, which is used for vector rotation in this mos.
+LazyWizard - the creator of Lazylib, which is used for vector rotation in this mod.
 
