@@ -12,8 +12,8 @@ vanilla vs the mod:
 
 ![alt text](ConquestVanilla.jpg)
 ![alt text](Conquest.jpg)
-![alt text](DomimatorVanilla.jpg)
-![alt text](Domimator.jpg)
+![alt text](DominatorVanilla.jpg)
+![alt text](Dominator.jpg)
 
 **Credits goes to**
 LazyWizard - the creator of Lazylib, which is used for vector rotation in this mod.
