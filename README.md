@@ -11,7 +11,6 @@ If you want to contribute to this mod, you're welcome to submit a pull request.
 vanilla vs the mod:
 
 ![alt text](ConquestVanilla.jpg)
-![alt text](Dominator.jpg)
 ![alt text](Conquest.jpg)
 ![alt text](DomimatorVanilla.jpg)
 ![alt text](Domimator.jpg)
