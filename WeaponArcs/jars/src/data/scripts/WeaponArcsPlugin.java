@@ -154,11 +154,11 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         List<WeaponAPI> weapons = engine.getPlayerShip().getAllWeapons();
 
         for (WeaponAPI weapon : weapons) {
-            boolean skip = false;
+            boolean skip = true;
             for (int i = 0; i < DO_NO_DRAW_WEAPONS.size(); i++) {
                 for (int j = 0; j < DO_NO_DRAW_WEAPONS.get(i).size(); j++) {
                     if ( DO_NO_DRAW_WEAPONS.get(i).get(j).equals(weapon.getSlot().toString())) {
-                        skip = true;
+                        skip = false;
                     }
                 }
             }
