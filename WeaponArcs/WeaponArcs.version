@@ -13,7 +13,7 @@
     #"masterVersionFile":"https://github.com/LazyWizard/VersionChecker/blob/master/versionchecker.version",
     #"masterVersionFile":"https://github.com/LazyWizard/VersionChecker/releases/download/0.1/versionchecker.version",
     #"masterVersionFile":"https://bitbucket.org/LazyWizard/version-checker/raw/tip/versionchecker.version",
-    "masterVersionFile":"https://github.com/archigo/WeaponArcsStarsector/blob/master/WeaponArcs/WeaponArcs.version",
+    "masterVersionFile":"https://raw.githubusercontent.com/archigo/WeaponArcsStarsector/master/WeaponArcs/WeaponArcs.version",
     # The name that is displayed in-game for your mod
     "modName":"Weapon Arcs",
     # The ID of the thread where updates to this mod can be found (optional).
@@ -29,6 +29,6 @@
     {
         "major":1,
         "minor":2,
-        "patch":0 # Can be a number, character or string (1, 2, a, b, "-RC2", etc)
+        "patch":1 # Can be a number, character or string (1, 2, a, b, "-RC2", etc)
     }
 }
