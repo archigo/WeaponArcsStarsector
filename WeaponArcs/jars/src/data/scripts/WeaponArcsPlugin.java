@@ -15,32 +15,89 @@ import org.lwjgl.util.vector.Vector2f;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-//import org.apache.log4j.Logger;
+import java.util.Map;
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
     private CombatEngineAPI engine;
     private ShipAPI player;
     private static Color WEAPON_ARC_COLOR;
-    private static ArrayList<ArrayList<String>> DO_NO_DRAW_WEAPONS;
-    //public static Logger log = Global.getLogger(WeaponArcsPlugin.class);
+    private static ArrayList<ArrayList<String>> DRAW_WEAPONS;
     private static String CurrentShip;
+    private static final String CONFIG_PATH = "weapon-arcs-settings.json";
+    private static final String PERSISTENT_WEAPONS_KEY = "weaponArcsPersistWeapons";
+    private static final String PERSISTENT_SHIP_KEY = "weaponArcsPersistShipname";
+    private JSONObject settings;
+    private String persistedShipname;
+    private Boolean firstRun = true;
+    private ArrayList<Boolean> ActiveGroups;
+    public static Logger log = Global.getLogger(WeaponArcsPlugin.class);
+    
 
     @Override
     public void init(CombatEngineAPI engine) {
         this.engine = engine;
-        CurrentShip = "";
-        WEAPON_ARC_COLOR = Global.getSettings().getColor("weaponArcColor");
-        if (DO_NO_DRAW_WEAPONS == null) {
-            DO_NO_DRAW_WEAPONS = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
-                DO_NO_DRAW_WEAPONS.add(new ArrayList<String>());
-            }
+        
+        Map<String, Object> data = Global.getSector().getPersistentData();
+        persistedShipname = (String) data.get(PERSISTENT_SHIP_KEY);
+        
+        DRAW_WEAPONS = new ArrayList<>();
+        ActiveGroups = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            DRAW_WEAPONS.add(new ArrayList<String>());
+            ActiveGroups.add(false);
         }
+        
+        // Id is new for each session, so workaround with name.
+        CurrentShip = "";                                      
+        
+        try {
+            settings = Global.getSettings().loadJSON(CONFIG_PATH);
+            JSONArray colorArray = settings.getJSONArray("weaponArcColor");
+            WEAPON_ARC_COLOR = new Color(Integer.parseInt(colorArray.get(0).toString()), 
+                    Integer.parseInt(colorArray.get(1).toString()), 
+                    Integer.parseInt(colorArray.get(2).toString()), 
+                    Integer.parseInt(colorArray.get(3).toString()));
+                           
+            
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+        }
+        //WEAPON_ARC_COLOR = Global.getSettings().getColor("weaponArcColor");
+        
+    }
+    
+    private void toogleAutoGroups(){
+        if(settings.optBoolean("autoEnable1"))
+                toggleWeaponGroup(0);
+            if(settings.optBoolean("autoEnable2"))
+                toggleWeaponGroup(1);
+            if(settings.optBoolean("autoEnable3"))
+                toggleWeaponGroup(2);
+            if(settings.optBoolean("autoEnable4"))
+                toggleWeaponGroup(3);
+            if(settings.optBoolean("autoEnable5"))
+                toggleWeaponGroup(4);
     }
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
+        
+        if(firstRun && persistedShipname != null && engine.getPlayerShip().getName().equals(persistedShipname)){
+            firstRun = false;
+            log.info("Shipname: " + persistedShipname);
+            CurrentShip = engine.getPlayerShip().getId();
+            
+            Map<String, Object> data = Global.getSector().getPersistentData();
+            ArrayList<Boolean> persistedGroups = (ArrayList<Boolean>) data.get(PERSISTENT_WEAPONS_KEY);
+            for (int i = 0; i < persistedGroups.size(); i++) {
+                if(persistedGroups.get(i))
+                    toggleWeaponGroup(i);                
+            }            
+        }           
         
         if (engine == null || engine.getCombatUI() == null) {
             return;
@@ -64,9 +121,12 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         
         if(!CurrentShip.equals(engine.getPlayerShip().getId())){
             CurrentShip = engine.getPlayerShip().getId();
-            for (ArrayList<String> arrayList : DO_NO_DRAW_WEAPONS) {
+            for (ArrayList<String> arrayList : DRAW_WEAPONS) {
                 arrayList.clear();
             }
+            Map<String, Object> data = Global.getSector().getPersistentData();
+            data.put(PERSISTENT_SHIP_KEY, engine.getPlayerShip().getName());
+            toogleAutoGroups();
         }
         for (InputEventAPI event : events) {
             if (event.isAltDown()) {                
@@ -128,21 +188,21 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     private void toggleWeaponGroup(int index) {
-        if (DO_NO_DRAW_WEAPONS.get(index).isEmpty()) {
+        if (DRAW_WEAPONS.get(index).isEmpty()) {
             List<WeaponGroupAPI> weaponGroups = engine.getPlayerShip().getWeaponGroupsCopy();
-            if(weaponGroups.size() <= index) return; // Ships has less than 5 groups.
+            if(weaponGroups.size() <= index) return; // Ships has less than groups than index.
             List<WeaponAPI> weapons = weaponGroups.get(index).getWeaponsCopy();
             for (int i = 0; i < weapons.size(); i++) {
                 WeaponAPI weapon = weapons.get(i);
-                DO_NO_DRAW_WEAPONS.get(index).add(weapon.getSlot().toString());
-                
+                DRAW_WEAPONS.get(index).add(weapon.getSlot().toString());                
             }
-        } else {
-            for (String weaponSlot : DO_NO_DRAW_WEAPONS.get(index)) {
-            }
-                DO_NO_DRAW_WEAPONS.get(index).clear();
-            
+            ActiveGroups.set(index, true);
+        } else {            
+            DRAW_WEAPONS.get(index).clear();       
+            ActiveGroups.set(index, false);
         }
+        Map<String, Object> data = Global.getSector().getPersistentData();
+            data.put(PERSISTENT_WEAPONS_KEY, ActiveGroups);
     }
 
     private static void glColor(Color color) {
@@ -155,9 +215,9 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
         for (WeaponAPI weapon : weapons) {
             boolean skip = true;
-            for (int i = 0; i < DO_NO_DRAW_WEAPONS.size(); i++) {
-                for (int j = 0; j < DO_NO_DRAW_WEAPONS.get(i).size(); j++) {
-                    if ( DO_NO_DRAW_WEAPONS.get(i).get(j).equals(weapon.getSlot().toString())) {
+            for (int i = 0; i < DRAW_WEAPONS.size(); i++) {
+                for (int j = 0; j < DRAW_WEAPONS.get(i).size(); j++) {
+                    if ( DRAW_WEAPONS.get(i).get(j).equals(weapon.getSlot().toString())) {
                         skip = false;
                     }
                 }
