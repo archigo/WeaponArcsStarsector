@@ -92,11 +92,15 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
             CurrentShip = engine.getPlayerShip().getId();
             
             Map<String, Object> data = Global.getSector().getPersistentData();
+            
             ArrayList<Boolean> persistedGroups = (ArrayList<Boolean>) data.get(PERSISTENT_WEAPONS_KEY);
-            for (int i = 0; i < persistedGroups.size(); i++) {
+            if(persistedGroups != null){
+               for (int i = 0; i < persistedGroups.size(); i++) {
                 if(persistedGroups.get(i))
                     toggleWeaponGroup(i);                
-            }            
+                } 
+            }
+                        
         }           
         
         if (engine == null || engine.getCombatUI() == null) {
