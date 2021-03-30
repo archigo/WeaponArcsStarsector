@@ -86,22 +86,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
         
-        if(firstRun && persistedShipname != null && engine.getPlayerShip().getName().equals(persistedShipname)){
-            firstRun = false;
-            log.info("Shipname: " + persistedShipname);
-            CurrentShip = engine.getPlayerShip().getId();
-            
-            Map<String, Object> data = Global.getSector().getPersistentData();
-            
-            ArrayList<Boolean> persistedGroups = (ArrayList<Boolean>) data.get(PERSISTENT_WEAPONS_KEY);
-            if(persistedGroups != null){
-               for (int i = 0; i < persistedGroups.size(); i++) {
-                if(persistedGroups.get(i))
-                    toggleWeaponGroup(i);                
-                } 
-            }
-                        
-        }           
+          
         
         if (engine == null || engine.getCombatUI() == null) {
             return;
@@ -117,11 +102,29 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         if (engine.getCombatUI().isShowingCommandUI()) {
             return;
         }
-
+        
         player = engine.getPlayerShip();
+        
         if (player == null || !engine.isEntityInPlay(player)) {
             return;
         }
+        
+        if(firstRun && persistedShipname != null && player.getName().equals(persistedShipname)){
+            firstRun = false;
+            //log.info("Shipname: " + persistedShipname);
+            CurrentShip = engine.getPlayerShip().getId();
+            
+            Map<String, Object> data = Global.getSector().getPersistentData();
+            
+            ArrayList<Boolean> persistedGroups = (ArrayList<Boolean>) data.get(PERSISTENT_WEAPONS_KEY);
+            if(persistedGroups != null){
+               for (int i = 0; i < persistedGroups.size(); i++) {
+                if(persistedGroups.get(i))
+                    toggleWeaponGroup(i);                
+                } 
+            }
+                        
+        }       
         
         if(!CurrentShip.equals(engine.getPlayerShip().getId())){
             CurrentShip = engine.getPlayerShip().getId();
