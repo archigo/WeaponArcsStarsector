@@ -4,7 +4,7 @@ This is a mod for the game Starsector, which draws all the weapon arcs of the pl
 
 **Config**
 
-In weapon-arcs-settings.json you can change to color of the weapons arcs, and set options to auto enable arcs on weapon groups 1-5.
+In weapon-arcs-settings.json you can change to color of the weapons arcs, and set options to auto enable arcs on weapon groups.
 
 **Game forum thread**
 http://fractalsoftworks.com/forum/index.php?topic=13535.0
