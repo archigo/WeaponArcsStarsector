@@ -12,5 +12,5 @@ import com.fs.starfarer.api.BaseModPlugin;
  * @author Archigo
  */
 public class WeaponArcsBaseModPlugin extends BaseModPlugin {
-    
+
 }
