@@ -31,6 +31,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     private static final String PERSISTENT_WEAPONS_KEY = "weaponArcsPersistWeapons";
     private static final String PERSISTENT_SHIP_KEY = "weaponArcsPersistShipname";
     private JSONObject settings;
+    private Integer arcRoughness;
     private String persistedShipname;
     private Boolean firstRun = true;
     private ArrayList<Boolean> ActiveGroups;
@@ -59,6 +60,10 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
             WEAPON_ARC_COLOR = new Color(Integer.parseInt(colorArray.get(0).toString()),
                     Integer.parseInt(colorArray.get(1).toString()), Integer.parseInt(colorArray.get(2).toString()),
                     Integer.parseInt(colorArray.get(3).toString()));
+            arcRoughness = settings.getInt("arcRoughness");
+            if(arcRoughness < 1){
+                arcRoughness = 1;
+            }
 
         } catch (Exception ex) {
             log.error(ex.getMessage());
@@ -104,7 +109,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
         player = engine.getPlayerShip();
 
-        if (player == null || !engine.isEntityInPlay(player)) {
+        if (player == null || player.getName() == null || !engine.isEntityInPlay(player)) {
             return;
         }
 
@@ -266,59 +271,63 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     @SuppressWarnings("static-access")
     private void drawWeaponArc(WeaponAPI weapon) {
 
-        if (!weapon.isDisabled()) {
-            Vector2f location = weapon.getLocation();
-            float arc = weapon.getArc();
-            float arcFacing = weapon.getArcFacing();
-            float left = arcFacing - (arc / 2);
-            float right = arcFacing + (arc / 2);
-            Vector2f toRotateLeft = new Vector2f(location.x + weapon.getRange(), location.y);
-            Vector2f destLeft = new Vector2f(0, 0);
-            VectorUtils.rotateAroundPivot(toRotateLeft, location, left, destLeft);
-            Vector2f toRotateRight = new Vector2f(location.x + weapon.getRange(), location.y);
-            Vector2f destRight = new Vector2f(0, 0);
-            VectorUtils.rotateAroundPivot(toRotateRight, location, right, destRight);
-
-            float shipFacing = engine.getPlayerShip().getFacing();
-
-            Vector2f finalLeft = new Vector2f(0, 0);
-            Vector2f finalRight = new Vector2f(0, 0);
-
-            VectorUtils.rotateAroundPivot(destLeft, location, shipFacing, finalLeft);
-            VectorUtils.rotateAroundPivot(destRight, location, shipFacing, finalRight);
-
-            Vector2f toRotateLeft2 = new Vector2f(location.x + 10, location.y);
-            Vector2f destLeft2 = new Vector2f(0, 0);
-            VectorUtils.rotateAroundPivot(toRotateLeft2, location, left, destLeft2);
-            Vector2f toRotateRight2 = new Vector2f(location.x + 10, location.y);
-            Vector2f destRight2 = new Vector2f(0, 0);
-            VectorUtils.rotateAroundPivot(toRotateRight2, location, right, destRight2);
-
-            Vector2f finalLeft2 = new Vector2f(0, 0);
-            Vector2f finalRight2 = new Vector2f(0, 0);
-
-            VectorUtils.rotateAroundPivot(destLeft2, location, shipFacing, finalLeft2);
-            VectorUtils.rotateAroundPivot(destRight2, location, shipFacing, finalRight2);
-
-            this.glColor(WEAPON_ARC_COLOR);
-
-            this.drawLine(finalLeft2, finalLeft);
-            this.drawLine(finalRight2, finalRight);
-
-            int segments = (int) arc / 10;
-
-            float xdif = (finalLeft.x - location.x) / 4;
-            float ydif = (finalLeft.y - location.y) / 4;
-
-            this.drawArc(location, finalLeft, arc, segments);
-
-            this.drawArc(location, new Vector2f(finalLeft.x - xdif, finalLeft.y - ydif), arc, segments);
-
-            this.drawArc(location, new Vector2f(finalLeft.x - xdif * 2, finalLeft.y - ydif * 2), arc, segments);
-
-            this.drawArc(location, new Vector2f(finalLeft.x - xdif * 3, finalLeft.y - ydif * 3), arc, segments);
-
+        if (weapon.isDisabled()) {
+            return;
         }
+
+        Vector2f location = weapon.getLocation();
+        float arc = weapon.getArc();
+        float arcFacing = weapon.getArcFacing();
+        float left = arcFacing - (arc / 2);
+        float right = arcFacing + (arc / 2);
+        Vector2f toRotateLeft = new Vector2f(location.x + weapon.getRange(), location.y);
+        Vector2f destLeft = new Vector2f(0, 0);
+        VectorUtils.rotateAroundPivot(toRotateLeft, location, left, destLeft);
+        Vector2f toRotateRight = new Vector2f(location.x + weapon.getRange(), location.y);
+        Vector2f destRight = new Vector2f(0, 0);
+        VectorUtils.rotateAroundPivot(toRotateRight, location, right, destRight);
+
+        float shipFacing = engine.getPlayerShip().getFacing();
+
+        Vector2f finalLeft = new Vector2f(0, 0);
+        Vector2f finalRight = new Vector2f(0, 0);
+
+        VectorUtils.rotateAroundPivot(destLeft, location, shipFacing, finalLeft);
+        VectorUtils.rotateAroundPivot(destRight, location, shipFacing, finalRight);
+
+        Vector2f toRotateLeft2 = new Vector2f(location.x + 10, location.y);
+        Vector2f destLeft2 = new Vector2f(0, 0);
+        VectorUtils.rotateAroundPivot(toRotateLeft2, location, left, destLeft2);
+        Vector2f toRotateRight2 = new Vector2f(location.x + 10, location.y);
+        Vector2f destRight2 = new Vector2f(0, 0);
+        VectorUtils.rotateAroundPivot(toRotateRight2, location, right, destRight2);
+
+        Vector2f finalLeft2 = new Vector2f(0, 0);
+        Vector2f finalRight2 = new Vector2f(0, 0);
+
+        VectorUtils.rotateAroundPivot(destLeft2, location, shipFacing, finalLeft2);
+        VectorUtils.rotateAroundPivot(destRight2, location, shipFacing, finalRight2);
+
+        this.glColor(WEAPON_ARC_COLOR);
+
+        this.drawLine(finalLeft2, finalLeft);
+        // 
+        this.drawLine(finalRight2, finalRight);
+
+        // How many parts to split the arch into, higher arcRoughness means less parts, so a more blocky arc
+        int segments = (int) arc / arcRoughness;
+
+        float xdif = (finalLeft.x - location.x) / 4;
+        float ydif = (finalLeft.y - location.y) / 4;
+
+        this.drawArc(location, finalLeft, arc, segments);
+
+        this.drawArc(location, new Vector2f(finalLeft.x - xdif, finalLeft.y - ydif), arc, segments);
+
+        this.drawArc(location, new Vector2f(finalLeft.x - xdif * 2, finalLeft.y - ydif * 2), arc, segments);
+
+        this.drawArc(location, new Vector2f(finalLeft.x - xdif * 3, finalLeft.y - ydif * 3), arc, segments);
+
     }
 
     private void drawArc(Vector2f center, Vector2f start, float range, int segments) {

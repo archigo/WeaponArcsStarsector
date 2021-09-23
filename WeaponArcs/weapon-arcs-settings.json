@@ -6,5 +6,6 @@
 	"autoEnable4": false,
 	"autoEnable5": false,
 	"autoEnable6": false,
-	"autoEnable7": false
+	"autoEnable7": false,
+	"arcRoughness": 10
 }
