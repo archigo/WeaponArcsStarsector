@@ -22,105 +22,117 @@ import org.json.JSONObject;
 
 public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
-    private CombatEngineAPI engine;
-    private ShipAPI player;
-    private static Color WEAPON_ARC_COLOR;
-    private static ArrayList<ArrayList<String>> DRAW_WEAPONS;
-    private static String CurrentShip;
-    private static final String CONFIG_PATH = "weapon-arcs-settings.json";
-    private static final String PERSISTENT_WEAPONS_KEY = "weaponArcsPersistWeapons";
-    private static final String PERSISTENT_SHIP_KEY = "weaponArcsPersistShipname";
-    private JSONObject settings;
-    private Integer arcRoughness;
-    private String persistedShipname;
-    private Boolean firstRun = true;
-    private ArrayList<Boolean> ActiveGroups;
-    public static Logger log = Global.getLogger(WeaponArcsPlugin.class);
+    private CombatEngineAPI _engine;
+    private ShipAPI _player;
+    private Color _weaponArcColor;
+    private Boolean _useGroupColors;
+    private char _toggleKey;
+    private Boolean _isToggleOn = false;
+    private static ArrayList<Color> _weaponArcGroupColors;
+    private static ArrayList<ArrayList<String>> _DRAW_WEAPONS;
+    private static String _currentShip;
+    private static final String _CONFIG_PATH = "weapon-arcs-settings.json";
+    private static final String _PERSISTENT_WEAPONS_KEY = "weaponArcsPersistWeapons";
+    private static final String _PERSISTENT_SHIP_KEY = "weaponArcsPersistShipname";
+    private JSONObject _settings;
+    private Integer _arcRoughness;
+    private String _persistedShipname;
+    private Boolean _firstRun = true;
+    private ArrayList<Boolean> _activeGroups;
+    public static Logger Log = Global.getLogger(WeaponArcsPlugin.class);
 
     @Override
     public void init(CombatEngineAPI engine) {
-        this.engine = engine;
+        this._engine = engine;
 
         Map<String, Object> data = Global.getSector().getPersistentData();
-        persistedShipname = (String) data.get(PERSISTENT_SHIP_KEY);
+        _persistedShipname = (String) data.get(_PERSISTENT_SHIP_KEY);
 
-        DRAW_WEAPONS = new ArrayList<>();
-        ActiveGroups = new ArrayList<>();
+        _DRAW_WEAPONS = new ArrayList<>();
+        _activeGroups = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            DRAW_WEAPONS.add(new ArrayList<String>());
-            ActiveGroups.add(false);
+            _DRAW_WEAPONS.add(new ArrayList<String>());
+            _activeGroups.add(false);
         }
 
         // Id is new for each session, so workaround with name.
-        CurrentShip = "";
+        _currentShip = "";
 
         try {
-            settings = Global.getSettings().loadJSON(CONFIG_PATH);
-            JSONArray colorArray = settings.getJSONArray("weaponArcColor");
-            WEAPON_ARC_COLOR = new Color(Integer.parseInt(colorArray.get(0).toString()),
-                    Integer.parseInt(colorArray.get(1).toString()), Integer.parseInt(colorArray.get(2).toString()),
-                    Integer.parseInt(colorArray.get(3).toString()));
-            arcRoughness = settings.getInt("arcRoughness");
-            if(arcRoughness < 1){
-                arcRoughness = 1;
+            _settings = Global.getSettings().loadJSON(_CONFIG_PATH);
+            String key = _settings.getString("toggleKey");
+            if (key != null && key.length() > 0) {
+                _toggleKey = key.toCharArray()[0];
+            }
+            _weaponArcColor = parseColor("weaponArcColor");
+            _useGroupColors = _settings.getBoolean("useCustomColorForEachGroup");
+            if (_useGroupColors) {
+                _weaponArcGroupColors = new ArrayList<Color>();
+                for (int i = 1; i <= 7; i++) {
+                    _weaponArcGroupColors.add(parseColor("weaponArcColor" + i));
+                }
+            }
+            _arcRoughness = _settings.getInt("arcRoughness");
+            if (_arcRoughness < 1) {
+                _arcRoughness = 1;
             }
 
         } catch (Exception ex) {
-            log.error(ex.getMessage());
+            Log.error(ex.getMessage());
         }
         // WEAPON_ARC_COLOR = Global.getSettings().getColor("weaponArcColor");
 
     }
 
     private void toogleAutoGroups() {
-        if (settings.optBoolean("autoEnable1"))
+        if (_settings.optBoolean("autoEnable1"))
             toggleWeaponGroup(0);
-        if (settings.optBoolean("autoEnable2"))
+        if (_settings.optBoolean("autoEnable2"))
             toggleWeaponGroup(1);
-        if (settings.optBoolean("autoEnable3"))
+        if (_settings.optBoolean("autoEnable3"))
             toggleWeaponGroup(2);
-        if (settings.optBoolean("autoEnable4"))
+        if (_settings.optBoolean("autoEnable4"))
             toggleWeaponGroup(3);
-        if (settings.optBoolean("autoEnable5"))
+        if (_settings.optBoolean("autoEnable5"))
             toggleWeaponGroup(4);
-        if (settings.optBoolean("autoEnable6"))
+        if (_settings.optBoolean("autoEnable6"))
             toggleWeaponGroup(5);
-        if (settings.optBoolean("autoEnable7"))
+        if (_settings.optBoolean("autoEnable7"))
             toggleWeaponGroup(6);
     }
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
 
-        if (engine == null || engine.getCombatUI() == null) {
+        if (_engine == null || _engine.getCombatUI() == null) {
             return;
         }
 
-        if (engine.isUIShowingDialog()) {
+        if (_engine.isUIShowingDialog()) {
             return;
         }
 
-        if (!engine.isSimulation() && !engine.isUIShowingHUD()) {
+        if (!_engine.isSimulation() && !_engine.isUIShowingHUD()) {
             return;
         }
-        if (engine.getCombatUI().isShowingCommandUI()) {
-            return;
-        }
-
-        player = engine.getPlayerShip();
-
-        if (player == null || player.getName() == null || !engine.isEntityInPlay(player)) {
+        if (_engine.getCombatUI().isShowingCommandUI()) {
             return;
         }
 
-        if (firstRun && persistedShipname != null && player.getName().equals(persistedShipname)) {
-            firstRun = false;
+        _player = _engine.getPlayerShip();
+
+        if (_player == null || _player.getName() == null || !_engine.isEntityInPlay(_player)) {
+            return;
+        }
+
+        if (_firstRun && _persistedShipname != null && _player.getName().equals(_persistedShipname)) {
+            _firstRun = false;
             // log.info("Shipname: " + persistedShipname);
-            CurrentShip = engine.getPlayerShip().getId();
+            _currentShip = _engine.getPlayerShip().getId();
 
             Map<String, Object> data = Global.getSector().getPersistentData();
 
-            ArrayList<Boolean> persistedGroups = (ArrayList<Boolean>) data.get(PERSISTENT_WEAPONS_KEY);
+            ArrayList<Boolean> persistedGroups = (ArrayList<Boolean>) data.get(_PERSISTENT_WEAPONS_KEY);
             if (persistedGroups != null) {
                 for (int i = 0; i < persistedGroups.size(); i++) {
                     if (persistedGroups.get(i))
@@ -130,17 +142,25 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
         }
 
-        if (!CurrentShip.equals(engine.getPlayerShip().getId())) {
-            CurrentShip = engine.getPlayerShip().getId();
-            for (ArrayList<String> arrayList : DRAW_WEAPONS) {
+        if (!_currentShip.equals(_engine.getPlayerShip().getId())) {
+            _currentShip = _engine.getPlayerShip().getId();
+            for (ArrayList<String> arrayList : _DRAW_WEAPONS) {
                 arrayList.clear();
             }
             Map<String, Object> data = Global.getSector().getPersistentData();
-            data.put(PERSISTENT_SHIP_KEY, engine.getPlayerShip().getName());
+            data.put(_PERSISTENT_SHIP_KEY, _engine.getPlayerShip().getName());
             toogleAutoGroups();
         }
+
         for (InputEventAPI event : events) {
-            if (event.isAltDown()) {
+            if (event.isAltDown() || event.getEventChar() == _toggleKey) {
+                _isToggleOn = !_isToggleOn;
+                break;
+            }
+        }
+
+        for (InputEventAPI event : events) {
+            if (_isToggleOn || event.isAltDown()) {
                 switch (event.getEventChar()) {
                     case '1':
                         toggleWeaponGroup(0);
@@ -169,7 +189,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
             }
         }
 
-        ViewportAPI viewport = engine.getViewport();
+        ViewportAPI viewport = _engine.getViewport();
 
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         final int width = (int) (Display.getWidth() * Display.getPixelScaleFactor()),
@@ -204,22 +224,22 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     private void toggleWeaponGroup(int index) {
-        if (DRAW_WEAPONS.get(index).isEmpty()) {
-            List<WeaponGroupAPI> weaponGroups = engine.getPlayerShip().getWeaponGroupsCopy();
+        if (_DRAW_WEAPONS.get(index).isEmpty()) {
+            List<WeaponGroupAPI> weaponGroups = _engine.getPlayerShip().getWeaponGroupsCopy();
             if (weaponGroups.size() <= index)
                 return; // Ships has less groups than index.
             List<WeaponAPI> weapons = weaponGroups.get(index).getWeaponsCopy();
             for (int i = 0; i < weapons.size(); i++) {
                 WeaponAPI weapon = weapons.get(i);
-                DRAW_WEAPONS.get(index).add(weapon.getSlot().toString());
+                _DRAW_WEAPONS.get(index).add(weapon.getSlot().toString());
             }
-            ActiveGroups.set(index, true);
+            _activeGroups.set(index, true);
         } else {
-            DRAW_WEAPONS.get(index).clear();
-            ActiveGroups.set(index, false);
+            _DRAW_WEAPONS.get(index).clear();
+            _activeGroups.set(index, false);
         }
         Map<String, Object> data = Global.getSector().getPersistentData();
-        data.put(PERSISTENT_WEAPONS_KEY, ActiveGroups);
+        data.put(_PERSISTENT_WEAPONS_KEY, _activeGroups);
     }
 
     private static void glColor(Color color) {
@@ -227,14 +247,19 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     private void handleDraw() {
-        List<WeaponAPI> weapons = engine.getPlayerShip().getAllWeapons();
+        List<WeaponAPI> weapons = _engine.getPlayerShip().getAllWeapons();
 
-        for (WeaponAPI weapon : weapons) {
+        for (int weaponIndex = 0; weaponIndex < weapons.size(); weaponIndex++) {
+            WeaponAPI weapon = weapons.get(weaponIndex);
             boolean skip = true;
-            for (int i = 0; i < DRAW_WEAPONS.size(); i++) {
-                for (int j = 0; j < DRAW_WEAPONS.get(i).size(); j++) {
-                    if (DRAW_WEAPONS.get(i).get(j).equals(weapon.getSlot().toString())) {
+            Color color = _weaponArcColor;
+            for (int i = 0; i < _DRAW_WEAPONS.size(); i++) {
+                for (int j = 0; j < _DRAW_WEAPONS.get(i).size(); j++) {
+                    if (_DRAW_WEAPONS.get(i).get(j).equals(weapon.getSlot().toString())) {
                         skip = false;
+                        if (_useGroupColors) {
+                            color = _weaponArcGroupColors.get(i);
+                        }
                     }
                 }
             }
@@ -242,13 +267,18 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
                 continue;
             }
 
-            this.drawWeaponFacing(weapon);
-            this.drawWeaponArc(weapon);
+            if (_useGroupColors) {
+                this.drawWeaponFacing(weapon, color);
+                this.drawWeaponArc(weapon, color);
+            } else {
+                this.drawWeaponFacing(weapon, _weaponArcColor);
+                this.drawWeaponArc(weapon, _weaponArcColor);
+            }
         }
     }
 
     @SuppressWarnings("static-access")
-    private void drawWeaponFacing(WeaponAPI weapon) {
+    private void drawWeaponFacing(WeaponAPI weapon, Color color) {
 
         if (!weapon.isDisabled()) {
             Vector2f location = weapon.getLocation();
@@ -261,7 +291,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
             Vector2f start = new Vector2f(0, 0);
             VectorUtils.rotateAroundPivot(toRotate, location, cangle, start);
 
-            this.glColor(WEAPON_ARC_COLOR);
+            this.glColor(color);
 
             this.drawLine(start, dest);
         }
@@ -269,7 +299,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     @SuppressWarnings("static-access")
-    private void drawWeaponArc(WeaponAPI weapon) {
+    private void drawWeaponArc(WeaponAPI weapon, Color color) {
 
         if (weapon.isDisabled()) {
             return;
@@ -287,7 +317,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         Vector2f destRight = new Vector2f(0, 0);
         VectorUtils.rotateAroundPivot(toRotateRight, location, right, destRight);
 
-        float shipFacing = engine.getPlayerShip().getFacing();
+        float shipFacing = _engine.getPlayerShip().getFacing();
 
         Vector2f finalLeft = new Vector2f(0, 0);
         Vector2f finalRight = new Vector2f(0, 0);
@@ -308,14 +338,15 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         VectorUtils.rotateAroundPivot(destLeft2, location, shipFacing, finalLeft2);
         VectorUtils.rotateAroundPivot(destRight2, location, shipFacing, finalRight2);
 
-        this.glColor(WEAPON_ARC_COLOR);
+        this.glColor(color);
 
         this.drawLine(finalLeft2, finalLeft);
-        // 
+        //
         this.drawLine(finalRight2, finalRight);
 
-        // How many parts to split the arch into, higher arcRoughness means less parts, so a more blocky arc
-        int segments = (int) arc / arcRoughness;
+        // How many parts to split the arch into, higher arcRoughness means less parts,
+        // so a more blocky arc
+        int segments = (int) arc / _arcRoughness;
 
         float xdif = (finalLeft.x - location.x) / 4;
         float ydif = (finalLeft.y - location.y) / 4;
@@ -347,5 +378,12 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         GL11.glVertex2f(start.x, start.y);
         GL11.glVertex2f(end.x, end.y);
         GL11.glEnd();
+    }
+
+    private Color parseColor(String jsonKey) throws Exception {
+        JSONArray colorArray = _settings.getJSONArray(jsonKey);
+
+        return new Color(Integer.parseInt(colorArray.get(0).toString()), Integer.parseInt(colorArray.get(1).toString()),
+                Integer.parseInt(colorArray.get(2).toString()), Integer.parseInt(colorArray.get(3).toString()));
     }
 }

@@ -7,5 +7,14 @@
 	"autoEnable5": false,
 	"autoEnable6": false,
 	"autoEnable7": false,
-	"arcRoughness": 10
+	"arcRoughness": 10,
+	"useCustomColorForEachGroup": false,
+	"weaponArcColor1":[255,0,0,102],
+	"weaponArcColor2":[0,255,0,102],
+	"weaponArcColor3":[0,0,255,102],
+	"weaponArcColor4":[255,125,0,102],
+	"weaponArcColor5":[255,255,0,102],
+	"weaponArcColor6":[255,125,255,102],
+	"weaponArcColor7":[0,255,255,102],
+	"toggleKey": "h"
 }
