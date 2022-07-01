@@ -2,7 +2,7 @@
   "id":"WEAPONARCS",
   "name":"Weapon Arcs",
   "author":"Archigo",
-  "version":"1.6.0",
+  "version":"1.7.0",
   "description":"This mod displays all weapon arcs on player ship. Toggle with ALT + 1-7.",
   "gameVersion":"0.95a-RC15",
   "jars":["jars/WeaponArcs.jar"],
