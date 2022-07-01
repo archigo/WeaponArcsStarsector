@@ -36,6 +36,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     private static final String _PERSISTENT_SHIP_KEY = "weaponArcsPersistShipname";
     private JSONObject _settings;
     private Integer _arcRoughness;
+    private Integer _rangeBands;
     private String _persistedShipname;
     private Boolean _firstRun = true;
     private ArrayList<Boolean> _activeGroups;
@@ -75,6 +76,10 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
             _arcRoughness = _settings.getInt("arcRoughness");
             if (_arcRoughness < 1) {
                 _arcRoughness = 1;
+            }
+            _rangeBands = _settings.getInt("rangeBands");
+            if (_rangeBands < 0) {
+                _rangeBands = 0;
             }
 
         } catch (Exception ex) {
@@ -348,16 +353,12 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
         // so a more blocky arc
         int segments = (int) arc / _arcRoughness;
 
-        float xdif = (finalLeft.x - location.x) / 4;
-        float ydif = (finalLeft.y - location.y) / 4;
-
-        this.drawArc(location, finalLeft, arc, segments);
-
-        this.drawArc(location, new Vector2f(finalLeft.x - xdif, finalLeft.y - ydif), arc, segments);
-
-        this.drawArc(location, new Vector2f(finalLeft.x - xdif * 2, finalLeft.y - ydif * 2), arc, segments);
-
-        this.drawArc(location, new Vector2f(finalLeft.x - xdif * 3, finalLeft.y - ydif * 3), arc, segments);
+        float xdif = (finalLeft.x - location.x) / (_rangeBands + 1);
+        float ydif = (finalLeft.y - location.y) / (_rangeBands + 1);
+        
+        for (int i = 0; i < _rangeBands; i++) {
+            this.drawArc(location, new Vector2f(finalLeft.x - (xdif * i), finalLeft.y - (ydif * i)), arc, segments);
+        }
 
     }
 

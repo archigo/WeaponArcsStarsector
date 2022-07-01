@@ -8,6 +8,7 @@
 	"autoEnable6": false,
 	"autoEnable7": false,
 	"arcRoughness": 10,
+	"rangeBands": 4,
 	"useCustomColorForEachGroup": false,
 	"weaponArcColor1":[255,0,0,102],
 	"weaponArcColor2":[0,255,0,102],
