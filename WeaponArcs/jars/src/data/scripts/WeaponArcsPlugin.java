@@ -3,13 +3,12 @@ package data.scripts;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
-import com.fs.starfarer.api.combat.ShipAPI;
-import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
-import com.fs.starfarer.api.combat.WeaponGroupAPI;
+
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
@@ -26,8 +25,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     private ShipAPI _player;
     private Color _weaponArcColor;
     private Boolean _useGroupColors;
-    private char _toggleKey;
-    private Boolean _isToggleOn = false;
+    private Integer _toggleKey;
     private static ArrayList<Color> _weaponArcGroupColors;
     private static ArrayList<ArrayList<String>> _DRAW_WEAPONS;
     private static String _currentShip;
@@ -39,32 +37,30 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
     private Integer _rangeBands;
     private String _persistedShipname;
     private Boolean _firstRun = true;
+    private Boolean _hasBeenInitialized = false;
     private ArrayList<Boolean> _activeGroups;
     public static Logger Log = Global.getLogger(WeaponArcsPlugin.class);
 
     @Override
     public void init(CombatEngineAPI engine) {
-        this._engine = engine;
-
-        Map<String, Object> data = Global.getSector().getPersistentData();
-        _persistedShipname = (String) data.get(_PERSISTENT_SHIP_KEY);
-
-        _DRAW_WEAPONS = new ArrayList<>();
-        _activeGroups = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            _DRAW_WEAPONS.add(new ArrayList<String>());
-            _activeGroups.add(false);
-        }
-
-        // Id is new for each session, so workaround with name.
-        _currentShip = "";
-
         try {
-            _settings = Global.getSettings().loadJSON(_CONFIG_PATH);
-            String key = _settings.getString("toggleKey");
-            if (key != null && key.length() > 0) {
-                _toggleKey = key.toCharArray()[0];
+            this._engine = engine;
+
+            Map<String, Object> data = Global.getSector().getPersistentData();
+            _persistedShipname = (String) data.get(_PERSISTENT_SHIP_KEY);
+
+            _DRAW_WEAPONS = new ArrayList<>();
+            _activeGroups = new ArrayList<>();
+            for (int i = 0; i < 7; i++) {
+                _DRAW_WEAPONS.add(new ArrayList<String>());
+                _activeGroups.add(false);
             }
+
+            // Id is new for each session, so workaround with name.
+            _currentShip = "";
+
+            _settings = Global.getSettings().loadJSON(_CONFIG_PATH);
+            _toggleKey = _settings.getInt("toggleKey");
             _weaponArcColor = parseColor("weaponArcColor");
             _useGroupColors = _settings.getBoolean("useCustomColorForEachGroup");
             if (_useGroupColors) {
@@ -82,7 +78,9 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
                 _rangeBands = 0;
             }
 
+            _hasBeenInitialized = true;
         } catch (Exception ex) {
+            _hasBeenInitialized = false;
             Log.error(ex.getMessage());
         }
         // WEAPON_ARC_COLOR = Global.getSettings().getColor("weaponArcColor");
@@ -108,6 +106,9 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
+
+        if (_hasBeenInitialized == false)
+            return;
 
         if (_engine == null || _engine.getCombatUI() == null) {
             return;
@@ -157,15 +158,17 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
             toogleAutoGroups();
         }
 
-        for (InputEventAPI event : events) {
-            if (event.isAltDown() || event.getEventChar() == _toggleKey) {
-                _isToggleOn = !_isToggleOn;
-                break;
-            }
-        }
+        // Keyboard.isKeyDown(_toggleKey);
 
-        for (InputEventAPI event : events) {
-            if (_isToggleOn || event.isAltDown()) {
+        // for (InputEventAPI event : events) {
+        // if (event.isAltDown() || event.getEventChar() == _toggleKey) {
+        // _isToggleOn = !_isToggleOn;
+        // break;
+        // }
+        // }
+
+        if (Keyboard.isKeyDown(_toggleKey)) {
+            for (InputEventAPI event : events) {
                 switch (event.getEventChar()) {
                     case '1':
                         toggleWeaponGroup(0);
@@ -355,7 +358,7 @@ public class WeaponArcsPlugin extends BaseEveryFrameCombatPlugin {
 
         float xdif = (finalLeft.x - location.x) / (_rangeBands + 1);
         float ydif = (finalLeft.y - location.y) / (_rangeBands + 1);
-        
+
         for (int i = 0; i < _rangeBands; i++) {
             this.drawArc(location, new Vector2f(finalLeft.x - (xdif * i), finalLeft.y - (ydif * i)), arc, segments);
         }

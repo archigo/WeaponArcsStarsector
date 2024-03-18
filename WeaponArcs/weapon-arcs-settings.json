@@ -17,5 +17,5 @@
 	"weaponArcColor5":[255,255,0,102],
 	"weaponArcColor6":[255,125,255,102],
 	"weaponArcColor7":[0,255,255,102],
-	"toggleKey": "h"
+	"toggleKey": 56
 }
